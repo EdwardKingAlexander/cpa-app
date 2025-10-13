@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan route:list:*)",
+      "Bash(where php)",
+      "Bash(C:Usersbabyd.configherdbinphp.bat artisan route:list --path=api)",
+      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan route:list --path=api)",
+      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan route:list --path=api -v)",
+      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan route:clear)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
