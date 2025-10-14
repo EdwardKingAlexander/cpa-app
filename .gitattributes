@@ -1,11 +1,37 @@
-* text=auto eol=lf
+# Normalize line endings
+*               text=auto eol=lf
 
-*.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
-*.php diff=php
+# Common text types: force LF
+*.php           text eol=lf
+*.blade.php     text eol=lf
+*.js            text eol=lf
+*.ts            text eol=lf
+*.css           text eol=lf
+*.scss          text eol=lf
+*.html          text eol=lf
+*.md            text eol=lf
+*.json          text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.env.example   text eol=lf
+composer.json   text eol=lf
+composer.lock   text eol=lf
+package.json    text eol=lf
+package-lock.json text eol=lf
 
-CHANGELOG.md export-ignore
-README.md export-ignore
-.github/workflows/browser-tests.yml export-ignore
+# Windows scripts (keep CRLF where appropriate)
+*.ps1           text eol=crlf
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# Diff drivers you already had
+*.blade.php     diff=html
+*.css           diff=css
+*.html          diff=html
+*.md            diff=markdown
+*.php           diff=php
+
+# Archive export-ignore rules you already had
+CHANGELOG.md                                export-ignore
+README.md                                   export-ignore
+.github/workflows/browser-tests.yml         export-ignore

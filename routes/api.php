@@ -24,6 +24,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/srs/due', [SrsController::class, 'due'])
             ->name('api.v1.srs.due');
 
+        Route::get('/srs/practice', [SrsController::class, 'practice'])
+            ->name('api.v1.srs.practice');
+
         Route::post('/srs/review', [SrsController::class, 'review'])
             ->name('api.v1.srs.review');
     });
@@ -37,6 +40,10 @@ Route::get('/srs/due', function () {
     return redirect()->to('/api/v1/srs/due', 308);
 })->middleware('auth:sanctum');
 
+Route::get('/srs/practice', function () {
+    return redirect()->to('/api/v1/srs/practice', 308);
+})->middleware('auth:sanctum');
+
 Route::post('/srs/review', function () {
     return redirect()->to('/api/v1/srs/review', 308);
 })->middleware('auth:sanctum');
@@ -48,21 +55,26 @@ Route::post('/srs/review', function () {
 //   php artisan route:clear
 //   php artisan route:list --path=api -v
 //
-// Expected output (4 main routes + 2 legacy redirects):
-//   POST   api/v1/login       → Api\AuthController@login
-//   POST   api/v1/logout      → Api\AuthController@logout      [auth:sanctum]
-//   GET    api/v1/srs/due     → Api\SrsController@due          [auth:sanctum]
-//   POST   api/v1/srs/review  → Api\SrsController@review       [auth:sanctum]
-//   GET    api/srs/due        → Closure (308 redirect)         [auth:sanctum]
-//   POST   api/srs/review     → Closure (308 redirect)         [auth:sanctum]
+// Expected output (5 main routes + 3 legacy redirects):
+//   POST   api/v1/login          → Api\AuthController@login
+//   POST   api/v1/logout         → Api\AuthController@logout       [auth:sanctum]
+//   GET    api/v1/srs/due        → Api\SrsController@due           [auth:sanctum]
+//   GET    api/v1/srs/practice   → Api\SrsController@practice      [auth:sanctum]
+//   POST   api/v1/srs/review     → Api\SrsController@review        [auth:sanctum]
+//   GET    api/srs/due           → Closure (308 redirect)          [auth:sanctum]
+//   GET    api/srs/practice      → Closure (308 redirect)          [auth:sanctum]
+//   POST   api/srs/review        → Closure (308 redirect)          [auth:sanctum]
 //
 // Test login:
 //   curl -i -X POST http://127.0.0.1:8000/api/v1/login \
 //     -H "Content-Type: application/json" \
 //     -d "{\"email\":\"edward@rockymountainweb.design\",\"password\":\"password\"}"
 //
-// Test protected route (replace <token> with actual token):
+// Test protected routes (replace <token> with actual token):
 //   curl -i -X GET http://127.0.0.1:8000/api/v1/srs/due \
+//     -H "Authorization: Bearer <token>"
+//
+//   curl -i -X GET http://127.0.0.1:8000/api/v1/srs/practice?subject=TAX&limit=10 \
 //     -H "Authorization: Bearer <token>"
 //
 // Test legacy redirect (should return 308 and Location header):

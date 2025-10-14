@@ -84,6 +84,102 @@ class SrsController extends Controller
         })->values();
     }
 
+    public function practice(Request $request)
+    {
+        $request->validate([
+            'subject' => ['nullable','string'],
+            'limit'   => ['nullable','integer','min:1','max:50'],
+        ]);
+        $user = $request->user();
+        $limit = $request->integer('limit', 10);
+        $subjectCode = $request->string('subject')->toString();
+
+        // Fetch cards for practice mode (ignoring due_at)
+        // Strategy: Mix recently reviewed cards + random cards for variety
+        
+        $baseQuery = Card::query()
+            ->where('user_id', $user->id)
+            ->where('suspended', false);
+
+        if ($subjectCode) {
+            $baseQuery->whereHas('question.subject', fn($q) => $q->where('code', $subjectCode));
+        }
+
+        // Get recently reviewed cards (up to half the limit)
+        $recentLimit = (int) ceil($limit / 2);
+        $recentCards = (clone $baseQuery)
+            ->whereNotNull('last_reviewed_at')
+            ->orderBy('last_reviewed_at', 'desc')
+            ->with(['question:id,subject_id,stem,explanation', 'question.subject:id,code', 'question.choices:id,question_id,label,text,order'])
+            ->limit($recentLimit)
+            ->get();
+
+        // Fill the rest with random cards
+        $randomNeeded = $limit - $recentCards->count();
+        $recentIds = $recentCards->pluck('id')->toArray();
+        
+        $randomCards = collect();
+        if ($randomNeeded > 0) {
+            $randomCards = (clone $baseQuery)
+                ->when(!empty($recentIds), fn($q) => $q->whereNotIn('id', $recentIds))
+                ->inRandomOrder()
+                ->with(['question:id,subject_id,stem,explanation', 'question.subject:id,code', 'question.choices:id,question_id,label,text,order'])
+                ->limit($randomNeeded)
+                ->get();
+        }
+
+        // Combine and shuffle
+        $practiceCards = $recentCards->merge($randomCards)->shuffle()->take($limit);
+
+        // If still not enough, create cards for new questions
+        if ($practiceCards->count() < $limit) {
+            $needed = $limit - $practiceCards->count();
+            $existingQuestionIds = Card::where('user_id', $user->id)
+                ->pluck('question_id')
+                ->toArray();
+
+            $newQ = Question::query()
+                ->when($subjectCode, fn($q) => $q->whereHas('subject', fn($s) => $s->where('code',$subjectCode)))
+                ->whereNotIn('id', $existingQuestionIds)
+                ->inRandomOrder()
+                ->limit($needed)
+                ->get(['id','subject_id','stem','explanation']);
+
+            foreach ($newQ as $q) {
+                $card = Card::create([
+                    'user_id'      => $user->id,
+                    'question_id'  => $q->id,
+                    'due_at'       => Carbon::now(),
+                    'interval'     => 0,
+                    'repetitions'  => 0,
+                    'lapses'       => 0,
+                    'ease'         => 250,
+                    'suspended'    => false,
+                ]);
+                $card->load(['question:id,subject_id,stem,explanation', 'question.subject:id,code', 'question.choices:id,question_id,label,text,order']);
+                $practiceCards->push($card);
+            }
+        }
+
+        // Return same format as due() endpoint
+        return $practiceCards->map(function(Card $card){
+            return [
+                'card_id'   => $card->id,
+                'due_at'    => $card->due_at,
+                'subject'   => $card->question->subject->code ?? null,
+                'question'  => [
+                    'id'    => $card->question->id,
+                    'stem'  => $card->question->stem,
+                    'choices' => $card->question->choices->sortBy('order')->values()->map(fn(Choice $c)=>[
+                        'id' => $c->id,
+                        'label' => $c->label,
+                        'text' => $c->text,
+                    ]),
+                ],
+            ];
+        })->values();
+    }
+
     public function review(Request $request, SrsScheduler $scheduler)
     {
         $data = $request->validate([

@@ -1,12 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php artisan route:list:*)",
-      "Bash(where php)",
-      "Bash(C:Usersbabyd.configherdbinphp.bat artisan route:list --path=api)",
-      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan route:list --path=api)",
-      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan route:list --path=api -v)",
-      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan route:clear)"
+      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan:*)",
+      "Bash(curl -X POST http://cpa-app.test/api/v1/login -H \"Content-Type: application/json\" -d \"{\"\"email\"\":\"\"edward@rockymountainweb.design\"\",\"\"password\"\":\"\"password\"\"}\")",
+      "Bash(curl:*)",
+      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan db:seed)",
+      "Bash(\"C:\\Users\\babyd\\.config\\herd\\bin\\php.bat\" artisan tinker:*)",
+      "Bash(dir \"C:\\Users\\babyd\\Herd\\cpa-app\\app\\Services\")",
+      "Bash(move SrsService.php SrsScheduler.php)",
+      "Bash(ren:*)"
     ],
     "deny": [],
     "ask": []
