@@ -1,0 +1,69 @@
+{
+  "version": {
+    "code": "2022-10",
+    "effective_date": "2022-10-01",
+    "source": "LECPA_Syllabus_2022_10.pdf"
+  },
+  "nodes": [
+    {
+      "subject_code": "FAR",
+      "topic_code": "FAR",
+      "title": "Financial Accounting and Reporting",
+      "depth": 0,
+      "parent_topic_code": null,
+      "display_order": 1,
+      "exam_question_count": 70,
+      "notes": null
+    },
+    {
+      "subject_code": "AFAR",
+      "topic_code": "AFAR",
+      "title": "Advanced Financial Accounting and Reporting",
+      "depth": 0,
+      "parent_topic_code": null,
+      "display_order": 2,
+      "exam_question_count": 70,
+      "notes": null
+    },
+    {
+      "subject_code": "MS",
+      "topic_code": "MS",
+      "title": "Management Accounting and Services",
+      "depth": 0,
+      "parent_topic_code": null,
+      "display_order": 3,
+      "exam_question_count": 70,
+      "notes": null
+    },
+    {
+      "subject_code": "AUD",
+      "topic_code": "AUD",
+      "title": "Auditing",
+      "depth": 0,
+      "parent_topic_code": null,
+      "display_order": 4,
+      "exam_question_count": 70,
+      "notes": null
+    },
+    {
+      "subject_code": "RFBT",
+      "topic_code": "RFBT",
+      "title": "Regulatory Framework for Business Transactions",
+      "depth": 0,
+      "parent_topic_code": null,
+      "display_order": 5,
+      "exam_question_count": 100,
+      "notes": null
+    },
+    {
+      "subject_code": "TAX",
+      "topic_code": "TAX",
+      "title": "Taxation",
+      "depth": 0,
+      "parent_topic_code": null,
+      "display_order": 6,
+      "exam_question_count": 70,
+      "notes": null
+    }
+  ]
+}

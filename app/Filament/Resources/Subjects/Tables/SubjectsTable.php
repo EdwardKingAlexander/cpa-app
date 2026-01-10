@@ -16,8 +16,17 @@ class SubjectsTable
             ->columns([
                 TextColumn::make('code')
                     ->searchable(),
+                TextColumn::make('syllabus_code')
+                    ->label('Syllabus Code')
+                    ->searchable(),
                 TextColumn::make('name')
                     ->searchable(),
+                TextColumn::make('exam_question_count')
+                    ->label('Exam Questions')
+                    ->sortable(),
+                TextColumn::make('defaultSyllabusVersion.code')
+                    ->label('Syllabus Version')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

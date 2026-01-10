@@ -2,12 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Subject;
 use App\Models\Question;
+use App\Models\Subject;
+use App\Models\SyllabusVersion;
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -33,7 +34,11 @@ class DatabaseSeeder extends Seeder
             foreach ($this->subjectSeedData() as $code => $subjectData) {
                 $subject = Subject::updateOrCreate(
                     ['code' => $code],
-                    ['name' => $subjectData['name']]
+                    [
+                        'name' => $subjectData['name'],
+                        'syllabus_code' => $subjectData['syllabus_code'],
+                        'exam_question_count' => $subjectData['exam_question_count'],
+                    ]
                 );
 
                 foreach ($subjectData['questions'] as $questionData) {
@@ -61,6 +66,21 @@ class DatabaseSeeder extends Seeder
                     );
                 }
             }
+
+            $this->call([
+                SyllabusVersionSeeder::class,
+                SyllabusTopicSeeder::class,
+            ]);
+
+            $defaultVersion = SyllabusVersion::query()
+                ->orderByDesc('effective_date')
+                ->first();
+
+            if ($defaultVersion) {
+                Subject::query()
+                    ->whereNotNull('syllabus_code')
+                    ->update(['default_syllabus_version_id' => $defaultVersion->id]);
+            }
         });
     }
 
@@ -69,6 +89,8 @@ class DatabaseSeeder extends Seeder
         return [
             'FAR' => [
                 'name' => 'Financial Accounting and Reporting',
+                'syllabus_code' => 'FAR',
+                'exam_question_count' => 70,
                 'questions' => [
                     [
                         'stem' => 'Under ASC 606, revenue for a performance obligation satisfied over time is recognized when the entity can reasonably measure progress toward completion. Which measure best reflects this requirement?',
@@ -134,6 +156,8 @@ class DatabaseSeeder extends Seeder
             ],
             'AFAR' => [
                 'name' => 'Advanced Financial Accounting and Reporting',
+                'syllabus_code' => 'AFAR',
+                'exam_question_count' => 70,
                 'questions' => [
                     [
                         'stem' => 'A foreign subsidiary with a functional currency different from the parent uses which rate for translating revenues under the current rate method?',
@@ -199,6 +223,8 @@ class DatabaseSeeder extends Seeder
             ],
             'MAS' => [
                 'name' => 'Management Accounting and Services',
+                'syllabus_code' => 'MS',
+                'exam_question_count' => 70,
                 'questions' => [
                     [
                         'stem' => 'Which cost is treated as a period cost in variable costing but inventoried under absorption costing?',
@@ -264,6 +290,8 @@ class DatabaseSeeder extends Seeder
             ],
             'AUDIT' => [
                 'name' => 'Auditing',
+                'syllabus_code' => 'AUD',
+                'exam_question_count' => 70,
                 'questions' => [
                     [
                         'stem' => 'Which component of audit risk is directly controlled by the auditor through the work performed?',
@@ -329,6 +357,8 @@ class DatabaseSeeder extends Seeder
             ],
             'RFBT' => [
                 'name' => 'Regulatory Framework for Business Transactions',
+                'syllabus_code' => 'RFBT',
+                'exam_question_count' => 100,
                 'questions' => [
                     [
                         'stem' => 'Which business entity form offers limited liability to all owners and allows pass-through taxation by default?',
@@ -394,6 +424,8 @@ class DatabaseSeeder extends Seeder
             ],
             'TAX' => [
                 'name' => 'Taxation',
+                'syllabus_code' => 'TAX',
+                'exam_question_count' => 70,
                 'questions' => [
                     [
                         'stem' => 'Which filing status generally provides the lowest tax rate for a qualifying widow or widower with a dependent child?',

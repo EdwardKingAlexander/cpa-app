@@ -4,6 +4,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\SrsController;
+use App\Http\Controllers\Api\SyllabusController;
 use Illuminate\Support\Facades\Route;
 
 // ============================================================================
@@ -13,6 +14,15 @@ Route::prefix('v1')->group(function () {
     // Public authentication route
     Route::post('/login', [AuthController::class, 'login'])
         ->name('api.v1.login');
+
+    Route::get('/syllabus/subjects', [SyllabusController::class, 'subjects'])
+        ->name('api.v1.syllabus.subjects');
+
+    Route::get('/syllabus/subjects/{subject:code}/tree', [SyllabusController::class, 'subjectTree'])
+        ->name('api.v1.syllabus.subject.tree');
+
+    Route::get('/syllabus/topics/{topicCode}', [SyllabusController::class, 'topic'])
+        ->name('api.v1.syllabus.topics.show');
 
     // Protected routes (require auth:sanctum)
     Route::middleware('auth:sanctum')->group(function () {
