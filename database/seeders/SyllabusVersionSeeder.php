@@ -24,8 +24,11 @@ class SyllabusVersionSeeder extends Seeder
         $record = SyllabusVersion::query()->where('code', $versionCode)->first();
         $attributes = [
             'effective_date' => $version['effective_date'],
-            'source' => $version['source'],
         ];
+
+        if ($version['source'] !== null) {
+            $attributes['source'] = $version['source'];
+        }
 
         if ($record) {
             $record->fill($attributes)->save();

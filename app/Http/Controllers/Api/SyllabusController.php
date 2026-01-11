@@ -44,6 +44,12 @@ class SyllabusController extends Controller
             ->orderBy('display_order')
             ->get();
 
+        $root = $topics->firstWhere('topic_code', $subject->syllabus_code);
+
+        if (! $root) {
+            abort(404);
+        }
+
         return response()->json([
             'subject' => [
                 'id' => $subject->id,
@@ -53,7 +59,7 @@ class SyllabusController extends Controller
                 'exam_question_count' => $subject->exam_question_count,
             ],
             'syllabus_version' => $this->formatVersion($version),
-            'tree' => $this->buildTopicTree($topics),
+            'tree' => $this->buildTopicTree($topics, $root->id),
         ]);
     }
 
@@ -62,10 +68,23 @@ class SyllabusController extends Controller
         $version = $this->resolveVersion($request->query('version'), null);
 
         $topic = SyllabusTopic::query()
-            ->with(['subject', 'parent', 'children'])
+            ->with(['subject', 'parent'])
             ->where('syllabus_version_id', $version->id)
             ->where('topic_code', $topicCode)
             ->firstOrFail();
+
+        $topics = SyllabusTopic::query()
+            ->where('subject_id', $topic->subject_id)
+            ->where('syllabus_version_id', $version->id)
+            ->orderBy('depth')
+            ->orderBy('display_order')
+            ->get();
+
+        $tree = $this->buildTopicTree($topics, $topic->id);
+
+        if ($tree === []) {
+            abort(404);
+        }
 
         return response()->json([
             'subject' => [
@@ -76,25 +95,8 @@ class SyllabusController extends Controller
                 'exam_question_count' => $topic->subject->exam_question_count,
             ],
             'syllabus_version' => $this->formatVersion($version),
-            'topic' => [
-                'id' => $topic->id,
-                'topic_code' => $topic->topic_code,
-                'title' => $topic->title,
-                'depth' => $topic->depth,
-                'display_order' => $topic->display_order,
-                'is_leaf' => $topic->is_leaf,
+            'topic' => $tree[0] + [
                 'parent_topic_code' => $topic->parent?->topic_code,
-                'children' => $topic->children
-                    ->sortBy('display_order')
-                    ->values()
-                    ->map(fn (SyllabusTopic $child): array => [
-                        'id' => $child->id,
-                        'topic_code' => $child->topic_code,
-                        'title' => $child->title,
-                        'depth' => $child->depth,
-                        'display_order' => $child->display_order,
-                        'is_leaf' => $child->is_leaf,
-                    ]),
             ],
         ]);
     }
@@ -124,12 +126,13 @@ class SyllabusController extends Controller
             ->firstOrFail();
     }
 
-    private function buildTopicTree(Collection $topics): array
+    private function buildTopicTree(Collection $topics, ?string $rootId = null): array
     {
         $topicsByParent = $topics->groupBy('parent_id');
 
         $build = function (?string $parentId) use (&$build, $topicsByParent): array {
             return ($topicsByParent->get($parentId) ?? collect())
+                ->sortBy('display_order')
                 ->map(function (SyllabusTopic $topic) use (&$build): array {
                     return [
                         'id' => $topic->id,
@@ -145,7 +148,25 @@ class SyllabusController extends Controller
                 ->all();
         };
 
-        return $build(null);
+        if ($rootId === null) {
+            return $build(null);
+        }
+
+        $root = $topics->firstWhere('id', $rootId);
+
+        if (! $root) {
+            return [];
+        }
+
+        return [[
+            'id' => $root->id,
+            'topic_code' => $root->topic_code,
+            'title' => $root->title,
+            'depth' => $root->depth,
+            'display_order' => $root->display_order,
+            'is_leaf' => $root->is_leaf,
+            'children' => $build($root->id),
+        ]];
     }
 
     private function formatVersion(?SyllabusVersion $version): ?array

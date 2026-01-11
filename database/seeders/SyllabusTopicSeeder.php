@@ -7,8 +7,6 @@ use App\Models\SyllabusTopic;
 use App\Models\SyllabusVersion;
 use Database\Seeders\Concerns\LoadsSyllabusData;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Collection;
-use Ramsey\Uuid\Uuid;
 use RuntimeException;
 
 class SyllabusTopicSeeder extends Seeder
@@ -34,15 +32,9 @@ class SyllabusTopicSeeder extends Seeder
             ->get()
             ->keyBy('syllabus_code');
 
-        $nodes = Collection::make($data['nodes'])
-            ->sortBy([
-                ['depth', 'asc'],
-                ['display_order', 'asc'],
-            ])
-            ->values();
-
-        $childrenByParent = $nodes->groupBy(fn (array $node) => $node['parent_topic_code'] ?? '');
-        $topicIdsByCode = [];
+        $nodes = $data['nodes'];
+        $childrenByParent = collect($nodes)->groupBy(fn (array $node) => $node['parent_topic_code'] ?? '');
+        $topicsByCode = [];
 
         foreach ($nodes as $node) {
             $subjectCode = $node['subject_code'];
@@ -53,53 +45,50 @@ class SyllabusTopicSeeder extends Seeder
             }
 
             $topicCode = $node['topic_code'];
+
+            $attributes = [
+                'subject_id' => $subject->id,
+                'title' => $node['title'],
+                'depth' => (int) $node['depth'],
+                'display_order' => (int) $node['display_order'],
+                'notes' => $node['notes'] ?? null,
+            ];
+
+            $topic = SyllabusTopic::query()->updateOrCreate([
+                'syllabus_version_id' => $syllabusVersion->id,
+                'topic_code' => $topicCode,
+            ], $attributes);
+
+            $topicsByCode[$topicCode] = $topic;
+        }
+
+        foreach ($nodes as $node) {
+            $topicCode = $node['topic_code'];
+            $topic = $topicsByCode[$topicCode] ?? null;
+
+            if (! $topic) {
+                throw new RuntimeException('Missing topic for code: '.$topicCode);
+            }
+
             $parentCode = $node['parent_topic_code'] ?? null;
             $parentId = null;
 
             if ($parentCode !== null) {
-                if (! array_key_exists($parentCode, $topicIdsByCode)) {
+                $parent = $topicsByCode[$parentCode] ?? null;
+
+                if (! $parent) {
                     throw new RuntimeException('Missing parent topic for code: '.$parentCode);
                 }
 
-                $parentId = $topicIdsByCode[$parentCode];
+                $parentId = $parent->id;
             }
 
-            $topicId = $this->resolveTopicId($versionCode, $topicCode, $node['id'] ?? null);
             $isLeaf = ! $childrenByParent->has($topicCode);
 
-            $attributes = [
-                'subject_id' => $subject->id,
-                'syllabus_version_id' => $syllabusVersion->id,
-                'topic_code' => $topicCode,
-                'title' => $node['title'],
+            $topic->fill([
                 'parent_id' => $parentId,
-                'depth' => (int) $node['depth'],
-                'display_order' => (int) $node['display_order'],
                 'is_leaf' => $isLeaf,
-                'notes' => $node['notes'] ?? null,
-            ];
-
-            $existing = SyllabusTopic::query()
-                ->where('syllabus_version_id', $syllabusVersion->id)
-                ->where('topic_code', $topicCode)
-                ->first();
-
-            if ($existing) {
-                $existing->fill($attributes)->save();
-            } else {
-                SyllabusTopic::create($attributes + ['id' => $topicId]);
-            }
-
-            $topicIdsByCode[$topicCode] = $topicId;
+            ])->save();
         }
-    }
-
-    private function resolveTopicId(string $versionCode, string $topicCode, ?string $providedId): string
-    {
-        if ($providedId) {
-            return $providedId;
-        }
-
-        return Uuid::uuid5(Uuid::NAMESPACE_URL, $versionCode.'|'.$topicCode)->toString();
     }
 }

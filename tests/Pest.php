@@ -41,7 +41,18 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function seedSyllabusSubjects(): void
 {
-    // ..
+    $subjects = [
+        ['code' => 'FAR', 'syllabus_code' => 'FAR', 'name' => 'Financial Accounting and Reporting', 'exam_question_count' => 70],
+        ['code' => 'AFAR', 'syllabus_code' => 'AFAR', 'name' => 'Advanced Financial Accounting and Reporting', 'exam_question_count' => 70],
+        ['code' => 'MAS', 'syllabus_code' => 'MS', 'name' => 'Management Accounting and Services', 'exam_question_count' => 70],
+        ['code' => 'AUDIT', 'syllabus_code' => 'AUD', 'name' => 'Auditing', 'exam_question_count' => 70],
+        ['code' => 'RFBT', 'syllabus_code' => 'RFBT', 'name' => 'Regulatory Framework for Business Transactions', 'exam_question_count' => 100],
+        ['code' => 'TAX', 'syllabus_code' => 'TAX', 'name' => 'Taxation', 'exam_question_count' => 70],
+    ];
+
+    foreach ($subjects as $subject) {
+        \App\Models\Subject::create($subject);
+    }
 }

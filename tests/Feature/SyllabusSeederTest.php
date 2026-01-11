@@ -10,22 +10,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function seedSyllabusSubjects(): void
-{
-    $subjects = [
-        ['code' => 'FAR', 'syllabus_code' => 'FAR', 'name' => 'Financial Accounting and Reporting', 'exam_question_count' => 70],
-        ['code' => 'AFAR', 'syllabus_code' => 'AFAR', 'name' => 'Advanced Financial Accounting and Reporting', 'exam_question_count' => 70],
-        ['code' => 'MAS', 'syllabus_code' => 'MS', 'name' => 'Management Accounting and Services', 'exam_question_count' => 70],
-        ['code' => 'AUDIT', 'syllabus_code' => 'AUD', 'name' => 'Auditing', 'exam_question_count' => 70],
-        ['code' => 'RFBT', 'syllabus_code' => 'RFBT', 'name' => 'Regulatory Framework for Business Transactions', 'exam_question_count' => 100],
-        ['code' => 'TAX', 'syllabus_code' => 'TAX', 'name' => 'Taxation', 'exam_question_count' => 70],
-    ];
-
-    foreach ($subjects as $subject) {
-        Subject::create($subject);
-    }
-}
-
 it('seeds syllabus topics idempotently', function () {
     seedSyllabusSubjects();
 
@@ -73,6 +57,64 @@ it('keeps the syllabus topic tree consistent', function () {
             $seen[$currentId] = true;
             $currentId = $topics->get($currentId)?->parent_id;
         }
+    }
+});
+
+it('creates a single connected tree per subject', function () {
+    seedSyllabusSubjects();
+
+    $this->seed([
+        SyllabusVersionSeeder::class,
+        SyllabusTopicSeeder::class,
+    ]);
+
+    $version = SyllabusVersion::query()->orderByDesc('effective_date')->first();
+    $subjects = Subject::query()->whereNotNull('syllabus_code')->get();
+
+    foreach ($subjects as $subject) {
+        $topics = SyllabusTopic::query()
+            ->where('subject_id', $subject->id)
+            ->where('syllabus_version_id', $version->id)
+            ->get();
+
+        $roots = $topics->whereNull('parent_id');
+        expect($roots)->toHaveCount(1);
+
+        $rootId = $roots->first()->id;
+        $topicsById = $topics->keyBy('id');
+
+        foreach ($topics as $topic) {
+            $currentId = $topic->id;
+            $seen = [];
+
+            while ($currentId !== null) {
+                expect($seen)->not->toHaveKey($currentId);
+                $seen[$currentId] = true;
+                $currentId = $topicsById->get($currentId)?->parent_id;
+            }
+
+            expect(array_key_exists($rootId, $seen))->toBeTrue();
+        }
+    }
+});
+
+it('marks leaf topics without children', function () {
+    seedSyllabusSubjects();
+
+    $this->seed([
+        SyllabusVersionSeeder::class,
+        SyllabusTopicSeeder::class,
+    ]);
+
+    $topics = SyllabusTopic::query()->get();
+    $childrenByParent = $topics->groupBy('parent_id');
+
+    foreach ($topics as $topic) {
+        if (! $topic->is_leaf) {
+            continue;
+        }
+
+        expect($childrenByParent->has($topic->id))->toBeFalse();
     }
 });
 
